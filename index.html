@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>เครื่องคำนวณค่าเงิน</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💱</text></svg>" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>💱 เครื่องคำนวณค่าเงิน</h1>
+        <div class="head-actions">
+          <span id="status" class="badge">กำลังโหลด…</span>
+          <button id="refresh" class="pri">รีเฟรช</button>
+        </div>
+      </header>
+
+      <section class="card">
+        <div class="field">
+          <label for="amt">จำนวนเงิน</label>
+          <input id="amt" type="number" inputmode="decimal" value="1000" min="0" />
+        </div>
+        <div class="row">
+          <div class="field"><label for="from">จากสกุล</label><select id="from"></select></div>
+          <button id="swap" class="swap" title="สลับสกุล">⇄</button>
+          <div class="field"><label for="to">เป็นสกุล</label><select id="to"></select></div>
+        </div>
+        <div class="result" id="result">—</div>
+        <div class="sub" id="rateline"></div>
+      </section>
+
+      <section class="card">
+        <div class="bar">
+          <h2>⭐ รายการที่ติดตาม</h2>
+          <div class="field"><label for="base">เทียบกับสกุล</label><select id="base"></select></div>
+        </div>
+        <div id="watch" class="grid"></div>
+        <p class="sub note">
+          "ล่าสุด" เทียบกับการอัปเดตก่อนหน้า ส่วน "ตั้งแต่ติดตาม" เทียบกับตอนที่กดดาว
+          ระบบอัปเดตอัตโนมัติทุก 60 วินาที
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>สกุลเงินทั้งหมด</h2>
+        <input id="q" placeholder="ค้นหา เช่น JPY, ดอลลาร์, ยูโร" />
+        <div id="all" class="list"></div>
+      </section>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
