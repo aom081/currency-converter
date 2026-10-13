@@ -5,7 +5,7 @@
 | ระบบที่ทดสอบ | เว็บแอปเครื่องคำนวณค่าเงิน (Vite + TypeScript) |
 | เวอร์ชัน | 1.0.0 |
 | ประเภทการทดสอบ | Functional / UI end-to-end (อัตโนมัติ) |
-| เครื่องมือ | Playwright Test (TypeScript) และ Robot Framework + Browser library |
+| เครื่องมือ | Playwright Test (TypeScript), Robot Framework + Browser library และ Selenium (Python + pytest) |
 
 ## 1. วัตถุประสงค์
 ยืนยันว่าแอปคำนวณค่าเงินได้ถูกต้อง ติดตามสกุลเงินและแสดงการเปลี่ยนแปลงได้ถูกต้อง จัดการกรณี API ล่มได้อย่างปลอดภัย และใช้งานได้บนเดสก์ท็อปและมือถือ
@@ -25,10 +25,11 @@
 
 ## 3. กลยุทธ์การทดสอบ
 1. **Mock API ทุกการทดสอบ** เพื่อให้ผลคำนวณเท่าเดิมทุกครั้ง และสร้างสถานการณ์อัตราขึ้น/ลง/ล่มได้
-2. **Playwright** ครอบคลุมทุกกรณี (TC ทั้ง 28 ข้อ) รันขนานกันบน Chromium, Firefox และมือถือ (Pixel 5)
+2. **Playwright** ครอบคลุมทุกกรณี (TC ทั้ง 28 ข้อ) รันขนานกันบน Chromium และมือถือ (Pixel 5)
 3. **Robot Framework** ครอบคลุมกรณีหลัก 22 ข้อ (smoke + regression) เขียนแบบ keyword-driven ให้ทีม QA อ่านง่าย รันบน Chromium
-4. ทั้งสองชุดใช้ test case ID เดียวกัน เพื่อสอบย้อนกลับได้ (ดู `TEST_CASES.md`)
-5. ทุกเทสต์เริ่มจากสภาพว่าง (context ใหม่ localStorage ว่าง) ไม่พึ่งลำดับการรัน
+4. **Selenium (Python + pytest)** ครอบคลุม 27 ข้อ (ยกเว้น TC-DATA-05 ที่ต้องใช้นาฬิกาจำลอง) ใช้ Page Object (`app_page.py`) และ mock server ตัวเดียวกับ Robot รันบน Chrome
+5. ทุกชุดใช้ test case ID เดียวกัน เพื่อสอบย้อนกลับได้ (ดู `TEST_CASES.md`)
+6. ทุกเทสต์เริ่มจากสภาพว่าง (context ใหม่ localStorage ว่าง) ไม่พึ่งลำดับการรัน
 
 | ระดับ | ความหมาย | แท็ก |
 |---|---|---|
@@ -40,8 +41,8 @@
 |---|---|
 | Node.js | 18+ |
 | Python | 3.9+ (สำหรับ Robot Framework) |
-| เบราว์เซอร์ | Chromium, Firefox (Playwright), Chromium (Robot) |
-| พอร์ต | Playwright: 5173, Robot: 5174, Mock API ของ Robot: 8787 |
+| เบราว์เซอร์ | Chromium (Playwright และ Robot), จอมือถือ Pixel 5 (Playwright), Chrome (Selenium) |
+| พอร์ต | Playwright: 5173, Robot และ Selenium: 5174 + Mock API: 8787 (**อย่ารัน Robot กับ Selenium พร้อมกัน** เพราะใช้พอร์ตเดียวกัน) |
 | ระบบปฏิบัติการ | Windows / macOS / Linux |
 
 ## 5. ข้อมูลทดสอบ
@@ -79,6 +80,7 @@
 | ไม่ได้ทดสอบกับ API จริง | ทำ smoke ด้วยมือเป็นครั้งคราวกับ open.er-api.com |
 | ข้อความภาษาไทยใน selector/assert เปลี่ยนแล้วเทสต์พัง | รวมข้อความไว้ใน helper/resource; แก้จุดเดียว |
 | เทสต์อัตโนมัติ 60 วินาทีพึ่ง fake clock | ใช้ `page.clock` (Playwright ≥ 1.45) ไม่รอจริง |
+| Selenium ดักเครือข่ายไม่ได้ จึงใช้ mock server แทน (ไม่มีโหมด 'JSON ไม่มี rates') และไม่ครอบคลุม TC-DATA-05 | ใช้ Playwright ครอบคลุมสองกรณีนี้ |
 | ไม่มี WebKit/Safari | เพิ่มโปรเจ็กต์ `webkit` ใน `playwright.config.ts` ได้เมื่อต้องการ |
 | อัตราสำรองในโค้ดเปลี่ยน → TC-DATA-02 ไม่ผ่าน | อัปเดตค่าคาดหวังให้ตรง `src/currencies.ts` |
 
@@ -86,6 +88,7 @@
 - แผนนี้, `TEST_CASES.md`, โค้ดทดสอบใน `tests/`
 - รายงาน Playwright: `playwright-report/` (HTML), trace/screenshot ของเทสต์ที่ล้มเหลวใน `test-results/`
 - รายงาน Robot: `results/robot/report.html`, `log.html`, `output.xml`
+- รายงาน Selenium: `results/selenium/report.html`
 
 ## 10. วิธีรัน
 ```bash
@@ -106,4 +109,10 @@ npm run test:e2e:report                   # เปิดรายงาน
 npm run test:robot
 robot --include smoke --outputdir results/robot tests/robot
 robot -v HEADLESS:False --outputdir results/robot tests/robot   # ดูเบราว์เซอร์ขณะรัน
+
+# Selenium (ใช้ venv และ pip install -r requirements.txt เดียวกับ Robot ไม่ต้อง rfbrowser init)
+pytest                                           # ทั้งหมด (Chrome headless)
+pytest -m smoke                                  # เฉพาะ smoke
+set HEADLESS=0 && pytest                         # ดูเบราว์เซอร์ (cmd) | macOS/Linux: HEADLESS=0 pytest
+npm run test:selenium                            # สร้างรายงาน HTML ใน results/selenium/
 ```

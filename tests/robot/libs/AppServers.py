@@ -1,7 +1,7 @@
 """ไลบรารี Robot Framework: เปิด mock API + Vite dev server ให้ทดสอบ
 
 - mock API  : http://localhost:8787/latest/USD  (ควบคุมอัตราและสถานะ error จาก Robot)
-- แอป (Vite): http://localhost:5174 โดยตั้ง VITE_RATES_URL ชี้ไป mock API
+- แอป (Vite): http://127.0.0.1:5174 โดยตั้ง VITE_RATES_URL ชี้ไป mock API
 """
 import atexit
 import json
@@ -70,7 +70,7 @@ class AppServers:
             env = {**os.environ, "VITE_RATES_URL": f"http://127.0.0.1:{MOCK_PORT}/latest/USD"}
             windows = os.name == "nt"
             self._app = subprocess.Popen(
-                ["npx", "vite", "--port", str(APP_PORT), "--strictPort"],
+                ["npx", "vite", "--host", "127.0.0.1", "--port", str(APP_PORT), "--strictPort"],
                 cwd=ROOT,
                 env=env,
                 shell=windows,
@@ -78,8 +78,8 @@ class AppServers:
                 stderr=subprocess.DEVNULL,
                 start_new_session=not windows,
             )
-            self._wait_for(f"http://localhost:{APP_PORT}/", 60)
-        return f"http://localhost:{APP_PORT}/"
+            self._wait_for(f"http://127.0.0.1:{APP_PORT}/", 60)
+        return f"http://127.0.0.1:{APP_PORT}/"
 
     def stop_servers(self):
         if self._app is not None:

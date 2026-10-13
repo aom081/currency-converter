@@ -5,7 +5,7 @@
 ## วิธีรัน
 ```bash
 npm install
-npm run dev      # เปิด http://localhost:5173
+npm run dev      # เปิด http://127.0.0.1:5173
 npm run build    # สร้างไฟล์สำหรับ deploy ในโฟลเดอร์ dist
 npm run preview  # ทดลองเปิดไฟล์ที่ build แล้ว
 ```
@@ -29,7 +29,7 @@ npm run preview  # ทดลองเปิดไฟล์ที่ build แล
 ```bash
 npm install
 npx playwright install                 # ติดตั้งเบราว์เซอร์ของ Playwright
-npm run test:e2e                       # Playwright (chromium, firefox, มือถือ)
+npm run test:e2e                       # Playwright (chromium, มือถือ)
 npx playwright test --grep @smoke      # เฉพาะ smoke
 
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
@@ -40,3 +40,12 @@ npm run test:robot                     # Robot Framework (เปิดแอป�
 ทุกเทสต์ใช้ mock API จึงไม่ต้องต่ออินเทอร์เน็ตและผลลัพธ์คงที่
 - Playwright: `tests/playwright/` (ดักการเรียก API ด้วย `page.route`)
 - Robot: `tests/robot/` (mock server ใน `libs/AppServers.py`, แอปรันที่พอร์ต 5174 พร้อม `VITE_RATES_URL`)
+
+### Selenium (Python + pytest)
+```bash
+pip install -r requirements.txt        # ใช้ venv เดียวกับ Robot
+pytest                                 # Chrome headless
+pytest -m smoke                        # เฉพาะ smoke
+```
+ตั้ง `HEADLESS=0` เพื่อดูเบราว์เซอร์ขณะรัน (cmd: `set HEADLESS=0 && pytest`) รายงานอยู่ที่ `results/selenium/report.html` (ใช้ `npm run test:selenium`)
+โค้ดอยู่ใน `tests/selenium/` ใช้ mock server และพอร์ต 5174 ร่วมกับ Robot จึงอย่ารันสองชุดพร้อมกัน

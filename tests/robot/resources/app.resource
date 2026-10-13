@@ -5,7 +5,7 @@ Library           ../libs/AppServers.py
 
 *** Variables ***
 ${HEADLESS}       ${TRUE}
-${APP_URL}        http://localhost:5174/
+${APP_URL}        http://127.0.0.1:5174/
 ${AMOUNT}         id=amt
 ${FROM}           id=from
 ${TO}             id=to

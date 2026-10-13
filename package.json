@@ -10,7 +10,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
-    "test:robot": "robot --outputdir results/robot tests/robot"
+    "test:robot": "robot --outputdir results/robot tests/robot",
+    "test:selenium": "pytest --html=results/selenium/report.html --self-contained-html"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",

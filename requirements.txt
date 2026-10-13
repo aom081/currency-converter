@@ -1,2 +1,5 @@
 robotframework>=7.0
 robotframework-browser>=18.0
+selenium>=4.20
+pytest>=8.0
+pytest-html>=4.1
