@@ -11,9 +11,9 @@ class AppPage:
         self.url = servers.url
 
     # ---------- เปิดหน้า ----------
-    def load(self, live=True):
-        """เปิดหน้าเว็บ แล้วรอสถานะ '● สด' (หรือ 'ออฟไลน์' เมื่อ live=False)"""
-        self.d.get(self.url)
+    def load(self, live=True, query=""):
+        """เปิดหน้าเว็บ (query เช่น '?amt=250&from=EUR&to=JPY') แล้วรอสถานะ 'สด' (หรือ 'ออฟไลน์' เมื่อ live=False)"""
+        self.d.get(self.url + query)
         self._wait_status(live)
 
     def reload(self, live=True):
@@ -21,7 +21,12 @@ class AppPage:
         self._wait_status(live)
 
     def _wait_status(self, live):
-        self.wait_text("#status", "● สด" if live else "ออฟไลน์", exact=False)
+        """รองรับทั้งภาษาไทยและอังกฤษ"""
+        words = ("● สด", "● Live") if live else ("ออฟไลน์", "Offline")
+        self.wait_true(
+            lambda: any(w in self.text("#status") for w in words),
+            f"สถานะไม่ใช่ {words} (ตอนนี้ {self.text('#status')!r})",
+        )
 
     # ---------- ค้นหา / อ่านค่า ----------
     def el(self, css):
@@ -147,3 +152,30 @@ class AppPage:
             WebDriverWait(self.d, timeout).until(ok)
         except TimeoutException:
             raise AssertionError(f"{css}[{name}]: คาดว่า {expected!r} แต่ได้ {last[0]!r}") from None
+
+    # ---------- ภาษา / เรียงลำดับ / ดาวน์โหลด ----------
+    def choose_lang(self, lang):
+        self.click(f'[data-lang-set="{lang}"]')
+
+    def card_codes(self):
+        return [e.text.strip() for e in self.d.find_elements(By.CSS_SELECTOR, "#watch .w .code")]
+
+    def wait_codes(self, expected):
+        self.wait_true(lambda: self.card_codes() == expected, f"ลำดับการ์ดไม่ใช่ {expected} (ตอนนี้ {self.card_codes()})")
+
+    def watch_three(self):
+        for code in ("JPY", "EUR", "GBP"):
+            self.star_in_list(code)
+
+
+def wait_for_download(directory, name, timeout=15):
+    """รอไฟล์ดาวน์โหลดเสร็จ แล้วคืนเนื้อหา (ตัด BOM ออก)"""
+    import time
+
+    end = time.time() + timeout
+    while time.time() < end:
+        f = directory / name
+        if f.exists() and not list(directory.glob("*.crdownload")):
+            return f.read_text(encoding="utf-8")
+        time.sleep(0.2)
+    raise AssertionError(f"ไม่พบไฟล์ดาวน์โหลด {name} ใน {directory} (มี: {[p.name for p in directory.iterdir()]})")

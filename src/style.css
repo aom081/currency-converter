@@ -103,3 +103,14 @@ svg.chart { width: 100%; height: 200px; display: block; margin-top: 10px; }
   .row { grid-template-columns: 1fr; }
   .swap { width: 100%; }
 }
+
+/* ===== ส่วนที่เพิ่ม: แชร์ลิงก์, เทียบเรทร้าน, เรียงลำดับ, ส่งออก ===== */
+.btn-sm { padding: 6px 10px; font-size: .85rem; }
+.share-bar { margin-top: 10px; }
+.share-row { margin-top: 8px; }
+.share-row input { font-size: .85rem; }
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 8px; }
+#shop-out .mrow b { word-break: break-word; text-align: right; }
+.mv { background: none; border: none; padding: 2px 6px; font-size: .9rem; color: var(--mute); }
+.mv:disabled { opacity: .3; }
+.top-actions { display: flex; align-items: center; gap: 2px; }

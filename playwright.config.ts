@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/playwright",
+  testIgnore: /pwa\.spec\.ts/, // ทดสอบ PWA แยกด้วย playwright.pwa.config.ts (ต้อง build จริง)
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,

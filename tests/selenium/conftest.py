@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "robot" / "libs"))
@@ -41,5 +43,16 @@ def app(driver, servers):
     servers.reset_mock()
     driver.set_window_size(1280, 800)
     driver.get(servers.url)
+    # รอให้รอบดึงข้อมูลแรกเสร็จก่อน ไม่งั้นมันจะเขียน localStorage ทับหลังเราล้างแล้ว
+    WebDriverWait(driver, 10).until(
+        lambda d: any(w in d.find_element(By.ID, "status").text for w in ("● สด", "● Live", "ออฟไลน์", "Offline"))
+    )
     driver.execute_script("localStorage.clear()")
     return AppPage(driver, servers)
+
+
+@pytest.fixture
+def download_dir(driver, tmp_path):
+    """ให้ Chrome ดาวน์โหลดไฟล์ลงโฟลเดอร์ชั่วคราวของเทสต์นี้"""
+    driver.execute_cdp_cmd("Browser.setDownloadBehavior", {"behavior": "allow", "downloadPath": str(tmp_path)})
+    return tmp_path

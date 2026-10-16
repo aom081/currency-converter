@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>เครื่องคำนวณค่าเงิน</title>
+    <meta name="theme-color" content="#4f46e5" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💱</text></svg>" />
     <script>
       /* ใส่ธีมที่เลือกไว้ก่อนวาดหน้า ป้องกันหน้าจอกะพริบ */
@@ -16,76 +19,105 @@
   <body>
     <div class="wrap">
       <header>
-        <h1>💱 เครื่องคำนวณค่าเงิน</h1>
+        <h1 data-i18n="app.h1">💱 เครื่องคำนวณค่าเงิน</h1>
         <div class="head-actions">
-          <span id="status" class="badge">กำลังโหลด…</span>
-          <div id="theme" class="seg" role="group" aria-label="ธีม">
-            <button data-theme-set="light" aria-pressed="false" title="สว่าง">☀️</button>
-            <button data-theme-set="dark" aria-pressed="false" title="มืด">🌙</button>
-            <button data-theme-set="auto" aria-pressed="false" title="ตามระบบ">🖥️</button>
+          <span id="status" class="badge" data-i18n="status.loading">กำลังโหลด…</span>
+          <div id="lang" class="seg" role="group" data-i18n-aria="lang.label" aria-label="ภาษา">
+            <button data-lang-set="th" aria-pressed="false">TH</button>
+            <button data-lang-set="en" aria-pressed="false">EN</button>
           </div>
-          <button id="refresh" class="pri">รีเฟรช</button>
+          <div id="theme" class="seg" role="group" data-i18n-aria="theme.label" aria-label="ธีม">
+            <button data-theme-set="light" aria-pressed="false" data-i18n-title="theme.light" title="สว่าง">☀️</button>
+            <button data-theme-set="dark" aria-pressed="false" data-i18n-title="theme.dark" title="มืด">🌙</button>
+            <button data-theme-set="auto" aria-pressed="false" data-i18n-title="theme.auto" title="ตามระบบ">🖥️</button>
+          </div>
+          <button id="refresh" class="pri" data-i18n="refresh">รีเฟรช</button>
         </div>
       </header>
 
       <section class="card">
         <div class="field">
-          <label for="amt">จำนวนเงิน</label>
+          <label for="amt" data-i18n="conv.amount">จำนวนเงิน</label>
           <input id="amt" type="number" inputmode="decimal" value="1000" min="0" />
         </div>
         <div class="row">
-          <div class="field"><label for="from">จากสกุล</label><select id="from"></select></div>
-          <button id="swap" class="swap" title="สลับสกุล">⇄</button>
-          <div class="field"><label for="to">เป็นสกุล</label><select id="to"></select></div>
+          <div class="field"><label for="from" data-i18n="conv.from">จากสกุล</label><select id="from"></select></div>
+          <button id="swap" class="swap" data-i18n-title="conv.swap" title="สลับสกุล">⇄</button>
+          <div class="field"><label for="to" data-i18n="conv.to">เป็นสกุล</label><select id="to"></select></div>
         </div>
         <div class="result" id="result">—</div>
         <div class="sub" id="rateline"></div>
+        <div class="share-bar">
+          <button id="share" class="btn-sm" data-i18n="share.btn">🔗 แชร์ลิงก์</button>
+        </div>
+        <div id="share-row" class="share-row" hidden>
+          <label for="share-url" data-i18n="share.label">ลิงก์ที่แชร์ (คัดลอกได้เลย)</label>
+          <input id="share-url" type="text" readonly />
+        </div>
+      </section>
+
+      <section class="card" id="shop-card">
+        <h2 data-i18n="shop.title">🏦 เทียบกับเรทร้านแลกเงิน / ธนาคาร</h2>
+        <div class="shop-grid">
+          <div class="field"><label for="shop-rate" id="shop-rate-label"></label>
+            <input id="shop-rate" type="number" step="any" min="0" inputmode="decimal" /></div>
+          <div class="field"><label for="shop-fee-pct" data-i18n="shop.feePct">ค่าธรรมเนียม (%)</label>
+            <input id="shop-fee-pct" type="number" step="any" min="0" inputmode="decimal" /></div>
+          <div class="field"><label for="shop-fee-fixed" id="shop-fixed-label"></label>
+            <input id="shop-fee-fixed" type="number" step="any" min="0" inputmode="decimal" /></div>
+        </div>
+        <div id="shop-hint" class="empty" data-i18n="shop.hint">กรอกเรทที่ร้านให้ เพื่อเทียบกับเรทกลาง</div>
+        <div id="shop-out" hidden>
+          <div class="mrow"><span data-i18n="shop.market">ตามเรทกลาง</span><b id="shop-market"></b></div>
+          <div class="mrow"><span data-i18n="shop.result">ที่ร้านให้ (หลังหักค่าธรรมเนียม)</span><b id="shop-result"></b></div>
+          <div class="mrow"><span data-i18n="shop.diff">ส่วนต่าง</span><b id="shop-diff"></b></div>
+          <div class="sub" id="shop-verdict"></div>
+        </div>
       </section>
 
       <section class="card">
-        <h2>🌍 แปลงเป็นหลายสกุลพร้อมกัน</h2>
+        <h2 data-i18n="multi.title">🌍 แปลงเป็นหลายสกุลพร้อมกัน</h2>
         <div class="sub" id="multi-head"></div>
         <div id="multi"></div>
       </section>
 
       <section class="card">
         <div class="bar">
-          <h2>⭐ รายการที่ติดตาม</h2>
-          <div class="field"><label for="base">เทียบกับสกุล</label><select id="base"></select></div>
+          <h2 data-i18n="watch.title">⭐ รายการที่ติดตาม</h2>
+          <div class="field"><label for="base" data-i18n="watch.base">เทียบกับสกุล</label><select id="base"></select></div>
+          <div class="field"><label for="watch-sort" data-i18n="watch.sort">เรียงลำดับ</label><select id="watch-sort"></select></div>
+          <button id="export-watch" class="btn-sm" data-i18n="watch.exportCsv">⬇️ ส่งออก CSV</button>
         </div>
         <div id="watch" class="grid"></div>
-        <p class="sub note">
-          "ล่าสุด" เทียบกับการอัปเดตก่อนหน้า ส่วน "ตั้งแต่ติดตาม" เทียบกับตอนที่กดดาว
-          ระบบอัปเดตอัตโนมัติทุก 60 วินาที · การแจ้งเตือนราคาเป้าหมายทำงานเฉพาะตอนเปิดหน้านี้ไว้
-          และเช็กจากข้อมูลสดเท่านั้น
-        </p>
+        <p class="sub note" data-i18n="watch.note"></p>
       </section>
 
       <section class="card" id="chart-card">
         <div class="bar">
-          <h2>📈 กราฟย้อนหลัง <span id="chart-title" class="sub"></span></h2>
-          <div id="chart-range" class="seg" role="group" aria-label="ช่วงเวลา">
-            <button data-range="7" aria-pressed="false">7 วัน</button>
-            <button data-range="30" aria-pressed="false">30 วัน</button>
-            <button data-range="90" aria-pressed="false">90 วัน</button>
+          <h2><span data-i18n="chart.title">📈 กราฟย้อนหลัง</span> <span id="chart-title" class="sub"></span></h2>
+          <div id="chart-range" class="seg" role="group" data-i18n-aria="chart.range" aria-label="ช่วงเวลา">
+            <button data-range="7" aria-pressed="false" data-i18n="chart.d7">7 วัน</button>
+            <button data-range="30" aria-pressed="false" data-i18n="chart.d30">30 วัน</button>
+            <button data-range="90" aria-pressed="false" data-i18n="chart.d90">90 วัน</button>
           </div>
+          <button id="export-chart" class="btn-sm" data-i18n="chart.export" disabled>⬇️ ส่งออก CSV</button>
         </div>
         <div id="chart-msg" class="empty"></div>
         <div id="chart-body" hidden>
           <div id="chart-svg"></div>
           <div class="stats">
-            <div class="stat"><small>ล่าสุด</small><b id="st-latest">—</b></div>
-            <div class="stat"><small>ต่ำสุด</small><b id="st-min">—</b></div>
-            <div class="stat"><small>สูงสุด</small><b id="st-max">—</b></div>
-            <div class="stat"><small>เปลี่ยนแปลง</small><b id="st-chg">—</b></div>
+            <div class="stat"><small data-i18n="chart.latest">ล่าสุด</small><b id="st-latest">—</b></div>
+            <div class="stat"><small data-i18n="chart.min">ต่ำสุด</small><b id="st-min">—</b></div>
+            <div class="stat"><small data-i18n="chart.max">สูงสุด</small><b id="st-max">—</b></div>
+            <div class="stat"><small data-i18n="chart.chg">เปลี่ยนแปลง</small><b id="st-chg">—</b></div>
           </div>
         </div>
-        <p class="sub note">แสดงตามสกุลต้นทางและปลายทางที่เลือกในตัวแปลงด้านบน</p>
+        <p class="sub note" data-i18n="chart.note">แสดงตามสกุลต้นทางและปลายทางที่เลือกในตัวแปลงด้านบน</p>
       </section>
 
       <section class="card">
-        <h2>สกุลเงินทั้งหมด</h2>
-        <input id="q" placeholder="ค้นหา เช่น JPY, ดอลลาร์, ยูโร" />
+        <h2 data-i18n="all.title">สกุลเงินทั้งหมด</h2>
+        <input id="q" data-i18n-ph="all.search" placeholder="ค้นหา เช่น JPY, ดอลลาร์, ยูโร" />
         <div id="all" class="list"></div>
       </section>
     </div>

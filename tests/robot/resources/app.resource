@@ -52,10 +52,10 @@ Open App And Wait For Live
     Wait For Live Status
 
 Wait For Live Status
-    Get Text    ${STATUS}    *=    ● สด
+    Get Text    ${STATUS}    matches    .*● (สด|Live).*
 
 Wait For Offline Status
-    Get Text    ${STATUS}    *=    ออฟไลน์
+    Get Text    ${STATUS}    matches    .*(ออฟไลน์|Offline).*
 
 Result Should Be
     [Arguments]    ${expected}
@@ -108,3 +108,29 @@ Set Alert
 Select Range
     [Arguments]    ${days}
     Click    css=#chart-range [data-range="${days}"]
+
+Open App With Query
+    [Documentation]    เปิดหน้าเว็บพร้อม query เช่น ?amt=250&from=EUR&to=JPY แล้วรอข้อมูลสด
+    [Arguments]    ${query}
+    New Context    viewport={'width': 1280, 'height': 800}    colorScheme=light
+    New Page    ${APP_URL}${query}
+    Wait For Live Status
+
+Choose Lang
+    [Arguments]    ${lang}
+    Click    css=[data-lang-set="${lang}"]
+
+Star Jpy Eur Gbp
+    Star From List    JPY
+    Star From List    EUR
+    Star From List    GBP
+
+Card Codes Should Be
+    [Arguments]    @{expected}
+    FOR    ${index}    ${code}    IN ENUMERATE    @{expected}
+        Get Text    css=#watch .w .code >> nth=${index}    ==    ${code}
+    END
+
+Choose Sort
+    [Arguments]    ${mode}
+    Select Options By    id=watch-sort    value    ${mode}

@@ -37,7 +37,29 @@ export const CURRENCIES: Record<string, [string, number]> = {
 
 export const CODES = Object.keys(CURRENCIES);
 
-export const nameOf = (code: string): string => CURRENCIES[code]?.[0] ?? code;
+const displayNames: Record<string, Intl.DisplayNames | null> = {};
+
+/** ชื่อสกุลเงินจากระบบของเบราว์เซอร์ (ใช้กับสกุลที่ไม่อยู่ในรายการหลัก) */
+function displayName(code: string, lang: string): string {
+  try {
+    displayNames[lang] ??= new Intl.DisplayNames([lang], { type: "currency" });
+    return displayNames[lang]?.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/** ชื่อสกุลเงิน: ภาษาไทยใช้ชื่อที่ตั้งไว้ก่อน ส่วนภาษาอังกฤษและสกุลอื่นใช้ Intl.DisplayNames */
+export const nameOf = (code: string, lang = "th"): string =>
+  lang === "th" ? (CURRENCIES[code]?.[0] ?? displayName(code, "th")) : displayName(code, "en");
+
+/** สกุลทั้งหมดที่รู้จัก: รายการหลัก (ตามลำดับเดิม) ตามด้วยสกุลอื่นที่ API ส่งมา (เรียงตามตัวอักษร) */
+export function allCodes(rates: Record<string, number>, extra: string[] = []): string[] {
+  const rest = [...Object.keys(rates), ...extra]
+    .filter((c) => /^[A-Z]{3}$/.test(c) && !(c in CURRENCIES))
+    .sort();
+  return [...CODES, ...new Set(rest)];
+}
 
 export const fallbackRates = (): Record<string, number> =>
   Object.fromEntries(CODES.map((c) => [c, CURRENCIES[c][1]]));

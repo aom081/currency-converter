@@ -106,6 +106,32 @@ export const ui = {
   stMin: (p: Page) => p.locator("#st-min"),
   stMax: (p: Page) => p.locator("#st-max"),
   stChg: (p: Page) => p.locator("#st-chg"),
+  // ภาษา
+  langBtn: (p: Page, lang: "th" | "en") => p.locator(`[data-lang-set="${lang}"]`),
+  h1: (p: Page) => p.locator("h1"),
+  // เทียบเรทร้าน
+  shopRate: (p: Page) => p.locator("#shop-rate"),
+  shopFeePct: (p: Page) => p.locator("#shop-fee-pct"),
+  shopFeeFixed: (p: Page) => p.locator("#shop-fee-fixed"),
+  shopHint: (p: Page) => p.locator("#shop-hint"),
+  shopOut: (p: Page) => p.locator("#shop-out"),
+  shopMarket: (p: Page) => p.locator("#shop-market"),
+  shopResult: (p: Page) => p.locator("#shop-result"),
+  shopDiff: (p: Page) => p.locator("#shop-diff"),
+  shopVerdict: (p: Page) => p.locator("#shop-verdict"),
+  shopRateLabel: (p: Page) => p.locator("#shop-rate-label"),
+  shopFixedLabel: (p: Page) => p.locator("#shop-fixed-label"),
+  // แชร์ลิงก์
+  shareBtn: (p: Page) => p.locator("#share"),
+  shareRow: (p: Page) => p.locator("#share-row"),
+  shareUrl: (p: Page) => p.locator("#share-url"),
+  // เรียงลำดับ / ส่งออก
+  sortSelect: (p: Page) => p.locator("#watch-sort"),
+  cardCodes: (p: Page) => p.locator("#watch .w .code"),
+  moveUp: (p: Page, code: string) => p.locator(`[data-move-up="${code}"]`),
+  moveDown: (p: Page, code: string) => p.locator(`[data-move-down="${code}"]`),
+  exportChart: (p: Page) => p.locator("#export-chart"),
+  exportWatch: (p: Page) => p.locator("#export-watch"),
   // แปลงหลายสกุล
   multiHead: (p: Page) => p.locator("#multi-head"),
   multiRows: (p: Page) => p.locator("#multi .mrow"),
@@ -131,6 +157,12 @@ export async function refreshAndWait(page: Page, mock: Mock): Promise<void> {
 export async function openApp(page: Page): Promise<void> {
   await page.goto("/");
   await expect(ui.status(page)).toContainText("● สด");
+}
+
+/** เปิดหน้าเว็บที่ path/query ที่กำหนด (เช่น "/?amt=250&from=EUR&to=JPY") แล้วรอข้อมูลสด */
+export async function openAppAt(page: Page, path: string): Promise<void> {
+  await page.goto(path);
+  await expect(ui.status(page)).toContainText(/● (สด|Live)/);
 }
 
 /** เปิดหน้าเว็บโดยไม่รอข้อมูลสด (ใช้กับกรณีออฟไลน์) */
