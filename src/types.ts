@@ -14,3 +14,21 @@ export interface Prefs {
   to: string;
   base: string;
 }
+
+export type ThemeMode = "light" | "dark" | "auto";
+
+export type AlertDir = "above" | "below";
+
+/** แจ้งเตือนราคาเป้าหมาย: 1 code = target base */
+export interface Alert {
+  code: string;
+  base: string;
+  dir: AlertDir;
+  target: number;
+  triggered: boolean;
+}
+
+export interface HistoryPoint {
+  date: string;
+  value: number;
+}

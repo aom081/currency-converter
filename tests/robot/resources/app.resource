@@ -22,6 +22,13 @@ ${CARD_RATE}      css=#watch .w .rate
 ${DELTA_LAST}     css=#watch .w .chg span:nth-child(1)
 ${DELTA_SINCE}    css=#watch .w .chg span:nth-child(2)
 ${WATCH_EMPTY}    css=#watch .empty
+${TOASTS}         css=#toasts .toast
+${ALERT_STATE}    css=#watch .al-state
+${CHART_TITLE}    id=chart-title
+${CHART_MSG}      id=chart-msg
+${CHART_SVG}      css=#chart-svg svg.chart
+${MULTI_ROWS}     css=#multi .mrow
+${MULTI_HEAD}     id=multi-head
 
 *** Keywords ***
 Start Test Environment
@@ -34,12 +41,14 @@ Stop Test Environment
     Close Browser
 
 Open App
-    [Documentation]    เปิดหน้าเว็บใน context ใหม่ (localStorage ว่างเสมอ)
-    New Context    viewport={'width': 1280, 'height': 800}
+    [Documentation]    เปิดหน้าเว็บใน context ใหม่ (localStorage ว่างเสมอ) ธีมของระบบกำหนดด้วย ${scheme} (light/dark)
+    [Arguments]    ${scheme}=light
+    New Context    viewport={'width': 1280, 'height': 800}    colorScheme=${scheme}
     New Page    ${APP_URL}
 
 Open App And Wait For Live
-    Open App
+    [Arguments]    ${scheme}=light
+    Open App    ${scheme}
     Wait For Live Status
 
 Wait For Live Status
@@ -65,3 +74,37 @@ Click Refresh
 
 Close Test Context
     Close Context
+
+Mock Hits Should Exceed
+    [Arguments]    ${n}
+    ${hits}=    Get Mock Hits
+    Should Be True    ${hits} > ${n}
+
+Refresh And Wait
+    [Documentation]    กดรีเฟรชและรอจนแอปเรียก API ครบรอบ (ปุ่มกลับมาใช้ได้)
+    ${before}=    Get Mock Hits
+    Click    ${REFRESH}
+    Wait Until Keyword Succeeds    10s    200ms    Mock Hits Should Exceed    ${before}
+    Get Property    ${REFRESH}    disabled    ==    ${False}
+
+Choose Theme
+    [Arguments]    ${mode}
+    Click    css=[data-theme-set="${mode}"]
+
+Body Background Should Be
+    [Arguments]    ${rgb}
+    Get Style    css=body    background-color    ==    ${rgb}
+
+Theme Attribute Should Be
+    [Arguments]    ${expected}
+    Get Attribute    css=html    data-theme    ==    ${expected}
+
+Set Alert
+    [Arguments]    ${code}    ${dir}    ${target}
+    Select Options By    css=[data-al-dir="${code}"]    value    ${dir}
+    Fill Text    css=[data-al-target="${code}"]    ${target}
+    Click    css=[data-al-set="${code}"]
+
+Select Range
+    [Arguments]    ${days}
+    Click    css=#chart-range [data-range="${days}"]

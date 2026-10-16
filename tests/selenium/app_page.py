@@ -114,3 +114,36 @@ class AppPage:
 
     def delta_since(self):
         return self.text("#watch .chg span:nth-child(2)")
+
+    # ---------- ธีม / แจ้งเตือน / กราฟ ----------
+    def body_bg(self):
+        return self.d.execute_script("return getComputedStyle(document.body).backgroundColor")
+
+    def html_theme(self):
+        return self.d.execute_script("return document.documentElement.getAttribute('data-theme')")
+
+    def wait_bg(self, expected):
+        self.wait_true(lambda: self.body_bg() == expected, f"สีพื้นหลังไม่ใช่ {expected} (ตอนนี้ {self.body_bg()})")
+
+    def choose_theme(self, mode):
+        self.click(f'[data-theme-set="{mode}"]')
+
+    def set_alert(self, code, direction, target):
+        self.select(f'[data-al-dir="{code}"]', direction)
+        self.set_value(f'[data-al-target="{code}"]', target)
+        self.click(f'[data-al-set="{code}"]')
+
+    def wait_attr(self, css, name, expected, timeout=10):
+        last = [""]
+
+        def ok(_):
+            try:
+                last[0] = self.attr(css, name)
+            except NoSuchElementException:
+                last[0] = "<ไม่พบ element>"
+            return last[0] == expected
+
+        try:
+            WebDriverWait(self.d, timeout).until(ok)
+        except TimeoutException:
+            raise AssertionError(f"{css}[{name}]: คาดว่า {expected!r} แต่ได้ {last[0]!r}") from None

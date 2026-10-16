@@ -29,6 +29,7 @@ def driver():
     if headless:
         opts.add_argument("--headless=new")
     opts.add_argument("--window-size=1280,800")
+    opts.add_argument("--disable-notifications")
     d = webdriver.Chrome(options=opts)
     yield d
     d.quit()

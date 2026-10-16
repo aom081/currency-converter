@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>เครื่องคำนวณค่าเงิน</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💱</text></svg>" />
+    <script>
+      /* ใส่ธีมที่เลือกไว้ก่อนวาดหน้า ป้องกันหน้าจอกะพริบ */
+      try {
+        var t = JSON.parse(localStorage.getItem("cw_theme") || "null");
+        if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div class="wrap">
@@ -12,6 +19,11 @@
         <h1>💱 เครื่องคำนวณค่าเงิน</h1>
         <div class="head-actions">
           <span id="status" class="badge">กำลังโหลด…</span>
+          <div id="theme" class="seg" role="group" aria-label="ธีม">
+            <button data-theme-set="light" aria-pressed="false" title="สว่าง">☀️</button>
+            <button data-theme-set="dark" aria-pressed="false" title="มืด">🌙</button>
+            <button data-theme-set="auto" aria-pressed="false" title="ตามระบบ">🖥️</button>
+          </div>
           <button id="refresh" class="pri">รีเฟรช</button>
         </div>
       </header>
@@ -31,6 +43,12 @@
       </section>
 
       <section class="card">
+        <h2>🌍 แปลงเป็นหลายสกุลพร้อมกัน</h2>
+        <div class="sub" id="multi-head"></div>
+        <div id="multi"></div>
+      </section>
+
+      <section class="card">
         <div class="bar">
           <h2>⭐ รายการที่ติดตาม</h2>
           <div class="field"><label for="base">เทียบกับสกุล</label><select id="base"></select></div>
@@ -38,8 +56,31 @@
         <div id="watch" class="grid"></div>
         <p class="sub note">
           "ล่าสุด" เทียบกับการอัปเดตก่อนหน้า ส่วน "ตั้งแต่ติดตาม" เทียบกับตอนที่กดดาว
-          ระบบอัปเดตอัตโนมัติทุก 60 วินาที
+          ระบบอัปเดตอัตโนมัติทุก 60 วินาที · การแจ้งเตือนราคาเป้าหมายทำงานเฉพาะตอนเปิดหน้านี้ไว้
+          และเช็กจากข้อมูลสดเท่านั้น
         </p>
+      </section>
+
+      <section class="card" id="chart-card">
+        <div class="bar">
+          <h2>📈 กราฟย้อนหลัง <span id="chart-title" class="sub"></span></h2>
+          <div id="chart-range" class="seg" role="group" aria-label="ช่วงเวลา">
+            <button data-range="7" aria-pressed="false">7 วัน</button>
+            <button data-range="30" aria-pressed="false">30 วัน</button>
+            <button data-range="90" aria-pressed="false">90 วัน</button>
+          </div>
+        </div>
+        <div id="chart-msg" class="empty"></div>
+        <div id="chart-body" hidden>
+          <div id="chart-svg"></div>
+          <div class="stats">
+            <div class="stat"><small>ล่าสุด</small><b id="st-latest">—</b></div>
+            <div class="stat"><small>ต่ำสุด</small><b id="st-min">—</b></div>
+            <div class="stat"><small>สูงสุด</small><b id="st-max">—</b></div>
+            <div class="stat"><small>เปลี่ยนแปลง</small><b id="st-chg">—</b></div>
+          </div>
+        </div>
+        <p class="sub note">แสดงตามสกุลต้นทางและปลายทางที่เลือกในตัวแปลงด้านบน</p>
       </section>
 
       <section class="card">
@@ -48,6 +89,7 @@
         <div id="all" class="list"></div>
       </section>
     </div>
+    <div id="toasts" class="toasts" aria-live="polite"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

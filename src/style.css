@@ -2,17 +2,25 @@
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
   --bg: #f6f7fb; --card: #fff; --tx: #14182b; --mute: #6b7280; --line: #e5e7ef;
-  --pri: #4f46e5; --up: #16a34a; --down: #dc2626; --chip: #eef0fb;
+  --pri: #4f46e5; --up: #16a34a; --down: #dc2626; --chip: #eef0fb; --toast: #14182b; --toast-tx: #fff;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0e1020; --card: #171a30; --tx: #eceefb; --mute: #9aa0bd; --line: #2a2e4a;
-    --pri: #8b85ff; --up: #4ade80; --down: #f87171; --chip: #20244a;
+    --pri: #8b85ff; --up: #4ade80; --down: #f87171; --chip: #20244a; --toast: #eceefb; --toast-tx: #14182b;
   }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1020; --card: #171a30; --tx: #eceefb; --mute: #9aa0bd; --line: #2a2e4a;
+  --pri: #8b85ff; --up: #4ade80; --down: #f87171; --chip: #20244a; --toast: #eceefb; --toast-tx: #14182b;
 }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0; background: var(--bg); color: var(--tx); line-height: 1.5;
   font-family: "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -39,6 +47,13 @@ button.pri { background: var(--pri); color: #fff; border-color: var(--pri); }
 .result { margin-top: 14px; font-size: 1.7rem; font-weight: 700; word-break: break-word; }
 .sub { color: var(--mute); font-size: .85rem; }
 .note { margin: 10px 0 0; }
+
+/* segmented control (ธีม / ช่วงกราฟ) */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: none; border-radius: 0; padding: 8px 12px; background: var(--bg); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--pri); color: #fff; }
+
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-top: 12px; }
 .w { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--bg); }
 .w .top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
@@ -57,6 +72,33 @@ svg.spark { width: 100%; height: 36px; margin-top: 6px; }
 .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; justify-content: space-between; }
 .bar h2 { margin: 0; flex: 2; min-width: 200px; }
 .bar .field { flex: 1; min-width: 140px; }
+
+/* แจ้งเตือนราคาเป้าหมาย */
+.alert-box { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.alert-box select, .alert-box input { padding: 6px 8px; font-size: .85rem; width: auto; flex: 1 1 110px; min-width: 0; }
+.alert-box button { padding: 6px 10px; font-size: .85rem; }
+.al-state { font-size: .85rem; flex: 1; }
+.al-state.hit { color: var(--up); font-weight: 700; }
+.al-err { width: 100%; color: var(--down); font-size: .8rem; }
+.al-err:empty { display: none; }
+.toasts { position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; max-width: min(360px, calc(100vw - 24px)); z-index: 50; pointer-events: none; }
+.toast { display: flex; gap: 8px; align-items: flex-start; background: var(--toast); color: var(--toast-tx); padding: 10px 12px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.25); font-size: .9rem; pointer-events: none; }
+.toast span { flex: 1; }
+.toast-x { pointer-events: auto; background: transparent; color: inherit; border: none; padding: 0 4px; font-size: 1.1rem; line-height: 1; }
+
+/* แปลงหลายสกุล */
+.mrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.mrow:last-child { border-bottom: none; }
+.mright { text-align: right; }
+.mval { font-weight: 700; word-break: break-word; }
+
+/* กราฟย้อนหลัง */
+svg.chart { width: 100%; height: 200px; display: block; margin-top: 10px; }
+.chart-dates { display: flex; justify-content: space-between; font-size: .75rem; color: var(--mute); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-top: 10px; }
+.stat { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.stat small { display: block; color: var(--mute); }
+
 @media (max-width: 520px) {
   .row { grid-template-columns: 1fr; }
   .swap { width: 100%; }

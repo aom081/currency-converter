@@ -9,11 +9,30 @@ export interface Mock {
   rates: Record<string, number>;
   mode: MockMode;
   hits: number;
+  /** โหมดของ API ย้อนหลัง: ok | abort (เครือข่ายล่ม) */
+  historyMode: "ok" | "abort";
+  historyHits: number;
+}
+
+/**
+ * อัตราย้อนหลังจำลอง: วันที่ i จาก n วัน = p * (0.9 + 0.1 * i/(n-1))
+ * (ต้นช่วง = 0.9p, ปลายช่วง = p) — ต้องตรงกับ mock ใน tests/robot/libs/AppServers.py
+ */
+export function historyBody(rates: Record<string, number>, base: string, sym: string, start: string, end: string) {
+  const p = rates[sym] / rates[base];
+  const s = new Date(`${start}T00:00:00Z`);
+  const n = Math.round((new Date(`${end}T00:00:00Z`).getTime() - s.getTime()) / 86_400_000) + 1;
+  const series: Record<string, Record<string, number>> = {};
+  for (let i = 0; i < n; i++) {
+    const d = new Date(s.getTime() + i * 86_400_000).toISOString().slice(0, 10);
+    series[d] = { [sym]: Math.round(p * (0.9 + (0.1 * i) / (n - 1)) * 1e6) / 1e6 };
+  }
+  return { amount: 1, base, start_date: start, end_date: end, rates: series };
 }
 
 /** ดักการเรียก API อัตราแลกเปลี่ยน แล้วตอบด้วยข้อมูลที่ควบคุมได้ */
 export async function mockApi(page: Page, mode: MockMode = "ok"): Promise<Mock> {
-  const mock: Mock = { rates: { ...BASE_RATES }, mode, hits: 0 };
+  const mock: Mock = { rates: { ...BASE_RATES }, mode, hits: 0, historyMode: "ok", historyHits: 0 };
   const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*" };
 
   await page.route("https://open.er-api.com/**", async (route) => {
@@ -31,6 +50,21 @@ export async function mockApi(page: Page, mode: MockMode = "ok"): Promise<Mock> 
       default:
         return route.fulfill({ status: 200, headers: cors, json: { result: "success", rates: mock.rates } });
     }
+  });
+
+  // API ย้อนหลัง (Frankfurter): /v1/<start>..<end>?base=X&symbols=Y
+  await page.route("https://api.frankfurter.dev/**", async (route) => {
+    if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
+    mock.historyHits++;
+    if (mock.historyMode === "abort") return route.abort();
+    const url = new URL(route.request().url());
+    const base = url.searchParams.get("base") ?? "USD";
+    const sym = url.searchParams.get("symbols") ?? "";
+    const [start, end] = (url.pathname.split("/").pop() ?? "").split("..");
+    if (!(base in mock.rates) || !(sym in mock.rates)) {
+      return route.fulfill({ status: 404, headers: cors, json: { message: "not found" } });
+    }
+    return route.fulfill({ status: 200, headers: cors, json: historyBody(mock.rates, base, sym, start, end) });
   });
   return mock;
 }
@@ -53,7 +87,45 @@ export const ui = {
   cardRate: (p: Page) => p.locator("#watch .w .rate"),
   deltaLast: (p: Page) => p.locator("#watch .chg span").nth(0),
   deltaSince: (p: Page) => p.locator("#watch .chg span").nth(1),
+  // ธีม
+  themeBtn: (p: Page, mode: "light" | "dark" | "auto") => p.locator(`[data-theme-set="${mode}"]`),
+  // แจ้งเตือน
+  alertDir: (p: Page, code: string) => p.locator(`[data-al-dir="${code}"]`),
+  alertTarget: (p: Page, code: string) => p.locator(`[data-al-target="${code}"]`),
+  alertSet: (p: Page, code: string) => p.locator(`[data-al-set="${code}"]`),
+  alertClear: (p: Page, code: string) => p.locator(`[data-al-clear="${code}"]`),
+  alertErr: (p: Page, code: string) => p.locator(`[data-al-err="${code}"]`),
+  alertState: (p: Page) => p.locator("#watch .al-state"),
+  toasts: (p: Page) => p.locator("#toasts .toast"),
+  // กราฟ
+  chartTitle: (p: Page) => p.locator("#chart-title"),
+  chartMsg: (p: Page) => p.locator("#chart-msg"),
+  chartSvg: (p: Page) => p.locator("#chart-svg svg.chart"),
+  rangeBtn: (p: Page, days: 7 | 30 | 90) => p.locator(`#chart-range [data-range="${days}"]`),
+  stLatest: (p: Page) => p.locator("#st-latest"),
+  stMin: (p: Page) => p.locator("#st-min"),
+  stMax: (p: Page) => p.locator("#st-max"),
+  stChg: (p: Page) => p.locator("#st-chg"),
+  // แปลงหลายสกุล
+  multiHead: (p: Page) => p.locator("#multi-head"),
+  multiRows: (p: Page) => p.locator("#multi .mrow"),
+  multiVal: (p: Page, code: string) => p.locator(`[data-multi="${code}"] .mval`),
 };
+
+/** ตั้งการแจ้งเตือนในการ์ดของสกุล `code` (เป้าหมายคิดเป็นสกุลฐาน) */
+export async function setAlert(page: Page, code: string, dir: "above" | "below", target: string): Promise<void> {
+  await ui.alertDir(page, code).selectOption(dir);
+  await ui.alertTarget(page, code).fill(target);
+  await ui.alertSet(page, code).click();
+}
+
+/** กดรีเฟรชและรอจนแอปเรียก API ครบรอบ (ปุ่มกลับมาใช้ได้) */
+export async function refreshAndWait(page: Page, mock: Mock): Promise<void> {
+  const before = mock.hits;
+  await ui.refresh(page).click();
+  await expect.poll(() => mock.hits).toBeGreaterThan(before);
+  await expect(ui.refresh(page)).toBeEnabled();
+}
 
 /** เปิดหน้าเว็บและรอจนได้ข้อมูลสด */
 export async function openApp(page: Page): Promise<void> {

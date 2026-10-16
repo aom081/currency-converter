@@ -1,7 +1,12 @@
 """ไลบรารี Robot Framework: เปิด mock API + Vite dev server ให้ทดสอบ
 
-- mock API  : http://localhost:8787/latest/USD  (ควบคุมอัตราและสถานะ error จาก Robot)
-- แอป (Vite): http://127.0.0.1:5174 โดยตั้ง VITE_RATES_URL ชี้ไป mock API
+- mock API  : http://127.0.0.1:8787/latest/USD  (อัตราล่าสุด)
+              http://127.0.0.1:8787/v1/<start>..<end>?base=X&symbols=Y  (อัตราย้อนหลัง)
+- แอป (Vite): http://127.0.0.1:5174 โดยตั้ง VITE_RATES_URL และ VITE_HISTORY_URL ชี้ไป mock API
+
+อัตราย้อนหลังที่ mock สร้าง: วันที่ i จาก n วัน = p * (0.9 + 0.1 * i/(n-1)) เมื่อ p คืออัตราปัจจุบัน
+(ต้นช่วง = 0.9p, ปลายช่วง = p) ทำให้ค่า ต่ำสุด/สูงสุด/% เปลี่ยนแปลง คำนวณล่วงหน้าได้
+(ต้องตรงกับ historyBody ใน tests/playwright/helpers.ts)
 """
 import atexit
 import json
@@ -11,8 +16,10 @@ import subprocess
 import threading
 import time
 import urllib.request
+from datetime import date, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parents[3]
 MOCK_PORT = 8787
@@ -31,8 +38,39 @@ class _Handler(BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
 
+    def _json(self, status, payload):
+        body = json.dumps(payload).encode()
+        self.send_response(status)
+        self._cors()
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _history(self, state):
+        url = urlparse(self.path)
+        qs = parse_qs(url.query)
+        base = qs.get("base", ["USD"])[0]
+        sym = qs.get("symbols", [""])[0]
+        start_s, end_s = url.path.rsplit("/", 1)[-1].split("..")
+        rates = state["rates"]
+        if base not in rates or sym not in rates:
+            return self._json(404, {"message": "not found"})
+        p = rates[sym] / rates[base]
+        start, end = date.fromisoformat(start_s), date.fromisoformat(end_s)
+        n = (end - start).days + 1
+        series = {}
+        for i in range(n):
+            frac = i / (n - 1) if n > 1 else 1.0
+            series[(start + timedelta(days=i)).isoformat()] = {sym: round(p * (0.9 + 0.1 * frac), 6)}
+        self._json(200, {"amount": 1.0, "base": base, "start_date": start_s, "end_date": end_s, "rates": series})
+
     def do_GET(self):
         state = self.server.state  # type: ignore[attr-defined]
+        if ".." in self.path:  # อัตราย้อนหลัง (ไม่นับใน hits ของอัตราล่าสุด)
+            state["history_hits"] += 1
+            if state["fail"]:
+                return self._json(500, {"message": "error"})
+            return self._history(state)
         state["hits"] += 1
         if state["fail"]:
             self.send_response(500)
@@ -64,10 +102,14 @@ class AppServers:
         """เริ่ม mock API และแอป (ทำซ้ำได้ ไม่เปิดซ้ำ) แล้วคืน URL ของแอป"""
         if self._mock is None:
             self._mock = ThreadingHTTPServer(("127.0.0.1", MOCK_PORT), _Handler)
-            self._mock.state = {"rates": dict(DEFAULT_RATES), "fail": False, "hits": 0}  # type: ignore[attr-defined]
+            self._mock.state = {"rates": dict(DEFAULT_RATES), "fail": False, "hits": 0, "history_hits": 0}  # type: ignore[attr-defined]
             threading.Thread(target=self._mock.serve_forever, daemon=True).start()
         if self._app is None:
-            env = {**os.environ, "VITE_RATES_URL": f"http://127.0.0.1:{MOCK_PORT}/latest/USD"}
+            env = {
+                **os.environ,
+                "VITE_RATES_URL": f"http://127.0.0.1:{MOCK_PORT}/latest/USD",
+                "VITE_HISTORY_URL": f"http://127.0.0.1:{MOCK_PORT}/v1",
+            }
             windows = os.name == "nt"
             self._app = subprocess.Popen(
                 ["npx", "vite", "--host", "127.0.0.1", "--port", str(APP_PORT), "--strictPort"],
@@ -113,6 +155,7 @@ class AppServers:
         s["rates"] = dict(DEFAULT_RATES)
         s["fail"] = False
         s["hits"] = 0
+        s["history_hits"] = 0
 
     def set_mock_rates(self, **rates):
         """ตั้งอัตราใหม่ เช่น: Set Mock Rates    JPY=140    THB=36"""
@@ -120,7 +163,7 @@ class AppServers:
             self._mock.state["rates"][code] = float(value)  # type: ignore[union-attr]
 
     def set_mock_failure(self, enabled=True):
-        """ให้ mock API ตอบ HTTP 500 (True) หรือกลับมาปกติ (False)"""
+        """ให้ mock API (ทั้งอัตราล่าสุดและย้อนหลัง) ตอบ HTTP 500 (True) หรือกลับมาปกติ (False)"""
         self._mock.state["fail"] = str(enabled).lower() in ("true", "1", "yes")  # type: ignore[union-attr]
 
     def get_mock_hits(self):
