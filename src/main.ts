@@ -309,6 +309,7 @@ function showChartMsg(msg: string): void {
   el("chart-msg").textContent = msg;
   el("chart-msg").hidden = false;
   el("chart-body").hidden = true;
+  el("chart-svg").replaceChildren();
 }
 
 function markRange(): void {
