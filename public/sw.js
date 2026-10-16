@@ -38,9 +38,14 @@ self.addEventListener("fetch", (event) => {
         return res;
       })
       .catch(() =>
-        caches
-          .match(req, { ignoreSearch: true })
-          .then((hit) => hit || caches.match(self.registration.scope, { ignoreSearch: true })),
+        caches.open(CACHE).then(async (cache) => {
+          const hit = await cache.match(req.url, { ignoreSearch: true });
+          if (hit) return hit;
+          if (req.mode === "navigate") {
+            return (await cache.match(self.registration.scope, { ignoreSearch: true })) || Response.error();
+          }
+          return Response.error();
+        }),
       ),
   );
 });

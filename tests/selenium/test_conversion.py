@@ -40,6 +40,7 @@ def test_tc_conv_05_rate_line(app):
     """TC-CONV-05 แสดงอัตราแลกเปลี่ยนทั้งสองทิศทาง"""
     app.wait_text("#rateline", "1 USD = 35 THB", exact=False)
     app.wait_text("#rateline", "1 THB = 0.028571 USD", exact=False)
+    app.wait_text("#result", "35,000 THB")
 
 
 def test_tc_conv_06_empty_or_zero(app):

@@ -100,16 +100,18 @@ class AppServers:
     # ---------- เริ่ม/หยุดเซิร์ฟเวอร์ ----------
     def start_servers(self):
         """เริ่ม mock API และแอป (ทำซ้ำได้ ไม่เปิดซ้ำ) แล้วคืน URL ของแอป"""
-        if self._mock is None:
+        live_api = os.getenv("LIVE_API", "").lower() in ("1", "true", "yes")
+        if self._mock is None and not live_api:
             self._mock = ThreadingHTTPServer(("127.0.0.1", MOCK_PORT), _Handler)
             self._mock.state = {"rates": dict(DEFAULT_RATES), "fail": False, "hits": 0, "history_hits": 0}  # type: ignore[attr-defined]
             threading.Thread(target=self._mock.serve_forever, daemon=True).start()
         if self._app is None:
-            env = {
-                **os.environ,
-                "VITE_RATES_URL": f"http://127.0.0.1:{MOCK_PORT}/latest/USD",
-                "VITE_HISTORY_URL": f"http://127.0.0.1:{MOCK_PORT}/v1",
-            }
+            env = {**os.environ}
+            if not live_api:
+                env.update(
+                    VITE_RATES_URL=f"http://127.0.0.1:{MOCK_PORT}/latest/USD",
+                    VITE_HISTORY_URL=f"http://127.0.0.1:{MOCK_PORT}/v1",
+                )
             windows = os.name == "nt"
             self._app = subprocess.Popen(
                 ["npx", "vite", "--host", "127.0.0.1", "--port", str(APP_PORT), "--strictPort"],
@@ -151,6 +153,8 @@ class AppServers:
     # ---------- ควบคุม mock ----------
     def reset_mock(self):
         """คืนค่าอัตราเริ่มต้น (THB=35, JPY=150, EUR=0.9, GBP=0.8) และปิดโหมด error"""
+        if self._mock is None:
+            return
         s = self._mock.state  # type: ignore[union-attr]
         s["rates"] = dict(DEFAULT_RATES)
         s["fail"] = False

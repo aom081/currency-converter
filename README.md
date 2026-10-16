@@ -91,7 +91,23 @@ pip install -r requirements.txt
 rfbrowser init                         # ติดตั้งเบราว์เซอร์ของ Robot Browser library
 npm run test:robot                     # Robot Framework (เปิดแอปและ mock API ให้อัตโนมัติ)
 ```
-ทุกเทสต์ใช้ mock API (อัตราล่าสุดและย้อนหลัง) จึงไม่ต้องต่ออินเทอร์เน็ตและผลลัพธ์คงที่ ตั้ง URL ของ API ได้ผ่าน `VITE_RATES_URL` และ `VITE_HISTORY_URL`
+ชุดทดสอบหลักใช้ mock API เพื่อให้ผลลัพธ์คงที่และทดสอบ error/offline ได้โดยไม่ต้องต่ออินเทอร์เน็ต
+
+สำหรับ smoke test ที่ใช้ API จริง:
+
+```bash
+npm run test:e2e:live
+npm run test:robot:live
+npm run test:selenium:live
+```
+
+ชุด live ตรวจการเชื่อมต่อและการคำนวณแบบไม่ผูกกับค่าอัตราคงที่ จึงต้องใช้อินเทอร์เน็ตและอาจได้รับผลกระทบจาก API ภายนอก
+
+- Playwright live: `tests/playwright/live.spec.ts`
+- Robot live: `tests/robot/live.robot` (แอปรันที่พอร์ต 5174)
+- Selenium live: `tests/selenium/test_live.py` (แอปรันที่พอร์ต 5174)
+
+ตั้ง URL ของ API ได้ผ่าน `VITE_RATES_URL` และ `VITE_HISTORY_URL`
 - Playwright: `tests/playwright/` (ดักการเรียก API ด้วย `page.route`)
 - Robot: `tests/robot/` (mock server ใน `libs/AppServers.py`, แอปรันที่พอร์ต 5174 พร้อม `VITE_RATES_URL`)
 

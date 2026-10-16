@@ -8,11 +8,14 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
+    "test:e2e:live": "playwright test tests/playwright/live.spec.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:pwa": "playwright test -c playwright.pwa.config.ts",
     "test:e2e:report": "playwright show-report",
     "test:robot": "robot --outputdir results/robot tests/robot",
-    "test:selenium": "pytest --html=results/selenium/report.html --self-contained-html"
+    "test:robot:live": "set \"LIVE_API=1\" && robot --include live --outputdir results/robot-live tests/robot",
+    "test:selenium": "pytest --html=results/selenium/report.html --self-contained-html",
+    "test:selenium:live": "set \"LIVE_API=1\" && pytest -m live --html=results/selenium-live/report.html --self-contained-html"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",

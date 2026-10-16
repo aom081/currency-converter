@@ -49,3 +49,10 @@ TC-CONV-06 จำนวนเงินว่างหรือ 0 แสดงผ
     Result Should Be    0 THB
     Fill Text    ${AMOUNT}    0
     Result Should Be    0 THB
+
+TC-CONV-07 สกุลต้นทางและปลายทางเหมือนกัน
+    [Tags]    TC-CONV-07
+    Open App And Wait For Live
+    Select Options By    ${FROM}    value    EUR
+    Select Options By    ${TO}    value    EUR
+    Result Should Be    1,000 EUR
